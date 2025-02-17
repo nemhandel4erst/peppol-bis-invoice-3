@@ -593,13 +593,31 @@ Last update: 2024 November release 3.0.18.
     <!-- Mix level -->
     <rule context="cac:AllowanceCharge[$DKSupplierCountry = 'DK' and $DKCustomerCountry = 'DK']">
       <assert id="DK-R-004"
-        test="not((cbc:AllowanceChargeReasonCode = 'ZZZ')
-						and not((string-length(normalize-space(cbc:AllowanceChargeReason/text())) = 4)
-								and (number(cbc:AllowanceChargeReason) &gt;= 0)
-								and (number(cbc:AllowanceChargeReason) &lt;= 9999))
-						)"
-        flag="fatal">When specifying non-VAT Taxes for Danish customers, Danish suppliers MUST use the AllowanceChargeReasonCode="ZZZ" and the 4-digit Tax category MUST be specified in AllowanceChargeReason</assert>
-    </rule>
+            test="
+                not(cbc:AllowanceChargeReasonCode = 'ZZZ') or
+                (
+                    cbc:AllowanceChargeReason and
+                    contains(cbc:AllowanceChargeReason, '#') and
+                    not(starts-with(cbc:AllowanceChargeReason, '#')) and
+                    not(ends-with(cbc:AllowanceChargeReason, '#')) and
+                    (string-length(normalize-space(cbc:AllowanceChargeReason/text())) = 4) and
+                    number(cbc:AllowanceChargeReason) >= 0 and
+                    number(cbc:AllowanceChargeReason) <= 9999
+                )"
+            flag="fatal">
+            When AllowanceChargeReasonCode = "ZZZ":
+            - AllowanceChargeReason must be present.
+            - It must include a "#" character, but "#" cannot be the first or last character.
+            - It must be exactly 4 characters long and contain a number between 0000 and 9999.
+
+            Values found:
+            - AllowanceChargeReasonCode: '<value-of select="cbc:AllowanceChargeReasonCode"/>'
+            - AllowanceChargeReason: '<value-of select="cbc:AllowanceChargeReason"/>'
+        </assert>
+
+
+
+
   </pattern>
   <!-- ITALY -->
   <pattern>
